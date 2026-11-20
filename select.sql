@@ -110,43 +110,50 @@ AND business_partners.id_partner NOT IN (SELECT customer_data.id_partner FROM cu
 
 --if case
 SELECT 
-    business_partners.partner_name AS 'Партнер',
-    customer_data.credit_limit AS 'Лимит',
-    CASE 
-        WHEN customer_data.credit_limit >= 500000 THEN 'VIP-клиент'
-        WHEN customer_data.credit_limit >= 100000 THEN 'Стандартный'
-        ELSE 'Низкий лимит'
-    END AS 'Категория',
-    IF(customer_data.credit_limit > 0, 'Лимит установлен', 'Без лимита') AS 'Статус лимита'
+business_partners.partner_name AS 'Партнер',
+customer_data.credit_limit AS 'Лимит',
+CASE 
+WHEN customer_data.credit_limit > 500000 THEN 'VIP'
+ELSE 'Обычный'
+END AS 'Класс',
+IF(customer_data.credit_limit > 0, 'Да', 'Нет') AS 'Есть лимит?'    
 FROM 
-    business_partners
+business_partners
 JOIN 
-    customer_data ON business_partners.id_partner = customer_data.id_partner;
-
+customer_data ON business_partners.id_partner = customer_data.id_partner;
 
 
 --create view
-CREATE OR REPLACE VIEW view_full_partner_info AS
+CREATE VIEW view_partners_banks AS
 SELECT 
-    business_partners.partner_name AS 'Партнер',
-    address_data.city AS 'Город',
-    bank_accounts.bank_name AS 'Банк'
+business_partners.partner_name AS 'Партнер',
+bank_accounts.bank_name AS 'Название банка'
 FROM 
-    business_partners
-LEFT JOIN 
-    address_data ON business_partners.id_partner = address_data.id_partner
-LEFT JOIN 
-    bank_accounts ON business_partners.id_partner = bank_accounts.id_partner;
+business_partners
+JOIN 
+bank_accounts ON business_partners.id_partner = bank_accounts.id_partner;
+SELECT * FROM view_partners_banks;
 
--- Вызов представления:
-SELECT * FROM view_full_partner_info;
+
+
+-- представление WITH
+WITH ClientLimits AS (
+SELECT 
+business_partners.partner_name AS 'Партнер',
+customer_data.credit_limit AS 'Лимит'
+FROM 
+business_partners
+JOIN 
+customer_data ON business_partners.id_partner = customer_data.id_partner
+)
+SELECT * FROM ClientLimits WHERE Лимит > 100000;
 
 
 
 
 --CREATE INDEX
 EXPLAIN SELECT * FROM business_partners WHERE tax_id_inn = '5904329366';
-CREATE INDEX index_tax_id_inn ON business_partners(tax_id_inn);
+CREATE INDEX idx_tax_id_inn2 ON business_partners(tax_id_inn);
 EXPLAIN SELECT * FROM business_partners WHERE tax_id_inn = '5904329366';
 
 
@@ -167,15 +174,6 @@ COMMIT; -- Фиксируем изменения (можно заменить н
 
 
 --PREPARE, EXECUTE, DEALLOCATE
--- 1. Подготавливаем запрос
 PREPARE search_partner_type FROM 'SELECT partner_name FROM business_partners WHERE id_type = ?';
-
--- 2. Задаем переменную (ищем Юрлица)
 SET @type_to_find = 2;
-
--- 3. Выполняем запрос
 EXECUTE search_partner_type USING @type_to_find;
-
--- 4. Очищаем память
-DEALLOCATE PREPARE search_partner_type;
-
