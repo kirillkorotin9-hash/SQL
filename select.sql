@@ -177,3 +177,38 @@ COMMIT; -- Фиксируем изменения (можно заменить н
 PREPARE search_partner_type FROM 'SELECT partner_name FROM business_partners WHERE id_type = ?';
 SET @type_to_find = 2;
 EXECUTE search_partner_type USING @type_to_find;
+
+
+
+
+--procedure--
+DROP PROCEDURE IF EXISTS CreditStats;
+DELIMITER //
+CREATE PROCEDURE CreditStats()
+BEGIN
+DECLARE var_min float;
+DECLARE var_max float;
+DECLARE var_avg float;
+DECLARE var_sum float; 
+
+SELECT 
+MIN(credit_limit),
+MAX(credit_limit),
+AVG(credit_limit),
+SUM(credit_limit)
+INTO 
+var_min,
+var_max,
+var_avg,
+var_sum
+FROM customer_data;
+SELECT 
+var_min AS 'Минимум',
+var_max AS 'Максимум',
+var_avg AS 'Среднее',
+ var_sum AS 'Сумма';
+END//
+DELIMITER ;
+CALL CreditStats();
+
+
