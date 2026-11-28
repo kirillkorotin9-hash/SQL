@@ -181,7 +181,16 @@ EXECUTE search_partner_type USING @type_to_find;
 
 
 
---procedure--
+--procedure 1--
+DROP TABLE IF EXISTS credit_stats_log;
+CREATE TABLE credit_stats_log (
+id INT AUTO_INCREMENT PRIMARY KEY,
+calc_date DATETIME,
+min_limit FLOAT,
+max_limit FLOAT,
+avg_limit FLOAT,
+sum_limit FLOAT
+);
 DROP PROCEDURE IF EXISTS CreditStats;
 DELIMITER //
 CREATE PROCEDURE CreditStats()
@@ -190,7 +199,6 @@ DECLARE var_min float;
 DECLARE var_max float;
 DECLARE var_avg float;
 DECLARE var_sum float; 
-
 SELECT 
 MIN(credit_limit),
 MAX(credit_limit),
@@ -202,13 +210,31 @@ var_max,
 var_avg,
 var_sum
 FROM customer_data;
+INSERT INTO credit_stats_log (calc_date, min_limit, max_limit, avg_limit, sum_limit)
+VALUES (NOW(), var_min, var_max, var_avg, var_sum);
 SELECT 
+NOW() AS 'Дата',
 var_min AS 'Минимум',
 var_max AS 'Максимум',
 var_avg AS 'Среднее',
- var_sum AS 'Сумма';
+var_sum AS 'Сумма';
 END//
 DELIMITER ;
 CALL CreditStats();
+
+--procedure 2(клиенты с кред лимитом не ниже ...)--
+DROP PROCEDURE IF EXISTS FindClientsByLimit;
+DELIMITER //
+CREATE PROCEDURE FindClientsByLimit(IN p_min_limit FLOAT)
+BEGIN
+SELECT 
+id_partner AS 'ID клиента',
+sales_org AS 'Сбытовая организация',
+credit_limit AS 'Кредитный лимит'
+FROM customer_data
+WHERE credit_limit >= p_min_limit;
+END//
+DELIMITER ;
+CALL FindClientsByLimit(200000);
 
 
