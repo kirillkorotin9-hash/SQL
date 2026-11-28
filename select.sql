@@ -270,3 +270,17 @@ END //
 DELIMITER ;
 SELECT CountClientsByLimit(100000) AS 'Количество клиентов';
 
+--Функция 2--
+DROP FUNCTION IF EXISTS GetAvgVendorRating;
+DELIMITER //
+CREATE FUNCTION GetAvgVendorRating(p_currency VARCHAR(3))
+RETURNS DECIMAL(3, 2)
+DETERMINISTIC
+BEGIN
+RETURN (
+SELECT AVG(vendor_rating)
+FROM vendor_data
+WHERE purchase_currency = p_currency);
+END//
+DELIMITER ;
+SELECT GetAvgVendorRating('RUB') AS 'Средний рейтинг';
