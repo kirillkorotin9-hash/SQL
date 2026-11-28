@@ -223,10 +223,24 @@ DELIMITER ;
 CALL CreditStats();
 
 --procedure 2(клиенты с кред лимитом не ниже ...)--
+DROP TABLE IF EXISTS search_stats_log;
+CREATE TABLE search_stats_log (
+id INT AUTO_INCREMENT PRIMARY KEY,
+search_date DATETIME,
+min_threshold FLOAT,
+found_clients_count INT
+);
 DROP PROCEDURE IF EXISTS FindClientsByLimit;
 DELIMITER //
 CREATE PROCEDURE FindClientsByLimit(IN p_min_limit FLOAT)
 BEGIN
+DECLARE var_count INT;
+SELECT COUNT(*) 
+INTO var_count
+FROM customer_data
+WHERE credit_limit >= p_min_limit;
+INSERT INTO search_stats_log (search_date, min_threshold, found_clients_count)
+VALUES (NOW(), p_min_limit, var_count);
 SELECT 
 id_partner AS 'ID клиента',
 sales_org AS 'Сбытовая организация',
@@ -236,5 +250,6 @@ WHERE credit_limit >= p_min_limit;
 END//
 DELIMITER ;
 CALL FindClientsByLimit(200000);
+SELECT * FROM search_stats_log;
 
 
