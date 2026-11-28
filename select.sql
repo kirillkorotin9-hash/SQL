@@ -253,3 +253,20 @@ CALL FindClientsByLimit(200000);
 SELECT * FROM search_stats_log;
 
 
+--Функция 1--
+USE my_partners_db;
+DROP FUNCTION IF EXISTS CountClientsByLimit;
+DELIMITER //
+CREATE FUNCTION CountClientsByLimit(min_limit INT) 
+RETURNS INT                                       
+DETERMINISTIC                                    
+BEGIN                                           
+DECLARE client_count INT;                     
+SELECT COUNT(*) INTO client_count             
+FROM customer_data 
+WHERE credit_limit >= min_limit;
+RETURN client_count;                         
+END //
+DELIMITER ;
+SELECT CountClientsByLimit(100000) AS 'Количество клиентов';
+
